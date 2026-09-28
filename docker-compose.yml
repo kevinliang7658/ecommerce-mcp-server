@@ -1,0 +1,44 @@
+# Ollama + FastAPI 业务网关 一键编排
+# 用法：
+#   docker compose up -d --build
+#   docker exec -it ollama ollama pull qwen2.5:7b     # 首次需手动拉模型（约 4.7GB，耐心等）
+#   curl http://localhost:8000/health                  # 验证
+#   curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" -d "{\"question\":\"你好，介绍下你自己\"}"
+
+services:
+  # ---------- 私有化大模型运行时 ----------
+  ollama:
+    image: ollama/ollama:0.5.7
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      # 模型文件持久化到 named volume，容器重建不用重新拉模型
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+    # 有 NVIDIA 显卡时可启用 GPU 加速（取消下面注释，需先装 NVIDIA Container Toolkit）：
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # ---------- 业务网关（给业务系统调的那一层） ----------
+  gateway:
+    build: .                      # 用项目根目录的 Dockerfile 构建
+    container_name: ollama-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      # Compose 网络里用服务名互相访问，类似 K8s 里用 Service 名
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: qwen2.5:7b
+      SYSTEM_PROMPT: 你是跨境电商公司的内部业务助手，回答简洁专业，不确定不要编造。
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+volumes:
+  ollama_models:

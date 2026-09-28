@@ -1,0 +1,10 @@
+# coding: utf-8
+# 电商工具箱 MCP Server + Ollama 私有化网关 依赖清单（版本全部钉死）
+# 安装命令（清华镜像）：
+#   pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+mcp==1.9.4            # MCP 官方 Python SDK（含 FastMCP，写工具像写 Flask 路由一样简单）
+openai==1.55.3        # 调 DeepSeek / Ollama 的 OpenAI 兼容接口
+fastapi==0.115.6      # 私有化部署演示：给 Ollama 包一层业务友好的 HTTP API
+uvicorn==0.34.0       # FastAPI 的 ASGI 服务器
+requests==2.32.3      # FastAPI 网关里调 Ollama 用
